@@ -1,7 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
+import './styles.css';
+import WeatherApp from './WeatherApp';
+
+function App() {
+    return <WeatherApp />;
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
