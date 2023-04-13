@@ -87,13 +87,21 @@ const Cloudy = styled(CloudyIcon)`
     flex-basis: 30%;
 `;
 
-const Refresh = styled(RefreshIcon)`
-    width: 15px;
-    height: 15px;
+const Refresh = styled.div`
     position: absolute;
     right: 15px;
     bottom: 15px;
-    cursor: pointer;
+    font-size: 12px;
+    color: #828282;
+    display: inline-flex;
+    align-items: flex-end;
+
+    svg {
+        margin-left: 10px;
+        width: 15px;
+        height: 15px;
+        cursor: pointer;
+    }
 `;
 
 
@@ -108,15 +116,40 @@ const WeatherApp = () => {
         humid: 0.88,
     })
 
+    const handleClick = () => {
+        fetch(
+        'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北'
+        )
+        .then((response) => response.json())
+        .then((data) => {
+            const locationData = data.records.location[0];
+
+            const weatherElements = locationData.weatherElement.reduce(
+                (neededElements, item) => {
+                    if (['WDSD', 'TEMP', 'HUMD'].includes(item.elementName)) {
+                        neededElements[item.elementName] = item.elementValue;
+                    }
+                    return neededElements;
+                },
+                {}
+            );
+
+            setCurrentWeather({
+                observationTime: locationData.time.obsTime,
+                locationName: locationData.locationName,
+                description: '多雲時晴',
+                temperature: weatherElements.TEMP,
+                windSpeed: weatherElements.WDSD,
+                humid: weatherElements.HUMD,
+            });
+        });
+    };
+
     return (
         <Container>
             <WeatherCard>
                 <Location>{currentWeather.locationName}</Location>
                 <Description>
-                    {new Intl.DateTimeFormat('zh-TW', {
-                        hour: 'numeric',
-                        minute: 'numeric',
-                    }).format(new Date(currentWeather.observationTime))}
                     {' '}
                     {currentWeather.description}
                 </Description>
@@ -132,9 +165,16 @@ const WeatherApp = () => {
                 </AirFlow>
                 <Rain>
                     <RainIcon />
-                    {currentWeather.humid * 100} %
+                    {Math.round(currentWeather.humid * 100)} %
                 </Rain>
-                <Refresh />
+                <Refresh onClick={handleClick}>
+                    最後觀測時間：
+                    {new Intl.DateTimeFormat('zh-TW', {
+                        hour: 'numeric',
+                        minute: 'numeric',
+                    }).format(new Date(currentWeather.observationTime))}{' '}
+                    <RefreshIcon />
+                </Refresh>
             </WeatherCard>
         </Container>
     )
