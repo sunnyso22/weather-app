@@ -1,4 +1,4 @@
-import React ,{ useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from '@emotion/styled'
 
 import { ReactComponent as CloudyIcon } from './images/day-cloudy.svg';
@@ -106,6 +106,7 @@ const Refresh = styled.div`
 
 
 const WeatherApp = () => {
+    console.log('--- invoke function component ---')
 
     const [currentWeather, setCurrentWeather] = useState({
         observationTime: '2019-10-02 22:10:00',
@@ -116,7 +117,12 @@ const WeatherApp = () => {
         humid: 0.88,
     })
 
-    const handleClick = () => {
+    useEffect(() => {
+        console.log('execute function in useEffect');
+        fetchCurrentWeather();
+    }, []);
+
+    const fetchCurrentWeather = () => {
         fetch(
         'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北'
         )
@@ -147,6 +153,7 @@ const WeatherApp = () => {
 
     return (
         <Container>
+            {console.log('render')}
             <WeatherCard>
                 <Location>{currentWeather.locationName}</Location>
                 <Description>
@@ -167,7 +174,7 @@ const WeatherApp = () => {
                     <RainIcon />
                     {Math.round(currentWeather.humid * 100)} %
                 </Rain>
-                <Refresh onClick={handleClick}>
+                <Refresh onClick={fetchCurrentWeather}>
                     最後觀測時間：
                     {new Intl.DateTimeFormat('zh-TW', {
                         hour: 'numeric',
