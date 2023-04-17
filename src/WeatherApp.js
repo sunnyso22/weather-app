@@ -106,20 +106,21 @@ const Refresh = styled.div`
 
 
 const WeatherApp = () => {
-    console.log('--- invoke function component ---')
-
-    const [currentWeather, setCurrentWeather] = useState({
-        observationTime: '2019-10-02 22:10:00',
-        locationName: '臺北市',
-        description: '多雲時晴',
-        temperature: 27.5,
-        windSpeed: 0.3,
-        humid: 0.88,
+    const [weatherElement, setWeatherElement] = useState({
+        observationTime: new Date(),
+        locationName: '',
+        humid: 0,
+        temperature: 0,
+        windSpeed: 0,
+        description: '',
+        weatherCode: 0,
+        rainPossibility: 0,
+        comfortability: '',
     })
 
     useEffect(() => {
-        console.log('execute function in useEffect');
         fetchCurrentWeather();
+        fetchWeatherForecast();
     }, []);
 
     const fetchCurrentWeather = () => {
@@ -140,46 +141,75 @@ const WeatherApp = () => {
                 {}
             );
 
-            setCurrentWeather({
+            setWeatherElement((prevState) => ({
+                ...prevState,
                 observationTime: locationData.time.obsTime,
                 locationName: locationData.locationName,
-                description: '多雲時晴',
                 temperature: weatherElements.TEMP,
                 windSpeed: weatherElements.WDSD,
                 humid: weatherElements.HUMD,
-            });
+            }));
         });
     };
 
+    const fetchWeatherForecast = () => {
+        fetch(
+        'https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北市'
+        )
+        .then((response) => response.json())
+        .then((data) => {
+            const locationData = data.records.location[0];
+
+            const weatherElements = locationData.weatherElement.reduce(
+                (neededElements, item) => {
+                  if (['Wx', 'PoP', 'CI'].includes(item.elementName)) {
+                    neededElements[item.elementName] = item.time[0].parameter;
+                  }
+                  return neededElements;
+                },
+                {}
+            );
+
+            setWeatherElement((prevState) => ({
+                ...prevState,
+                description: weatherElements.Wx.parameterName,
+                weatherCode: weatherElements.Wx.parameterValue,
+                rainPossibility: weatherElements.PoP.parameterName,
+                comfortability: weatherElements.CI.parameterName,
+            }));
+        });
+    }
+
     return (
         <Container>
-            {console.log('render')}
             <WeatherCard>
-                <Location>{currentWeather.locationName}</Location>
+                <Location>{weatherElement.locationName}</Location>
                 <Description>
-                    {' '}
-                    {currentWeather.description}
+                    {weatherElement.description}{' '}{weatherElement.comfortability}
                 </Description>
                 <CurrentWeather>
                     <Temperature>
-                        {Math.round(currentWeather.temperature)} <Celsius>°C</Celsius>
+                        {Math.round(weatherElement.temperature)} <Celsius>°C</Celsius>
                     </Temperature>
                     <Cloudy />
                 </CurrentWeather>
                 <AirFlow>
                     <AirFlowIcon />
-                    {currentWeather.windSpeed} m/h
+                    {weatherElement.windSpeed} m/h
                 </AirFlow>
                 <Rain>
                     <RainIcon />
-                    {Math.round(currentWeather.humid * 100)} %
+                    {Math.round(weatherElement.rainPossibility)} %
                 </Rain>
-                <Refresh onClick={fetchCurrentWeather}>
+                <Refresh onClick={() => {
+                    fetchCurrentWeather();
+                    fetchWeatherForecast();
+                }}>
                     最後觀測時間：
                     {new Intl.DateTimeFormat('zh-TW', {
                         hour: 'numeric',
                         minute: 'numeric',
-                    }).format(new Date(currentWeather.observationTime))}{' '}
+                    }).format(new Date(weatherElement.observationTime))}{' '}
                     <RefreshIcon />
                 </Refresh>
             </WeatherCard>
