@@ -119,12 +119,23 @@ const WeatherApp = () => {
     })
 
     useEffect(() => {
-        fetchCurrentWeather();
-        fetchWeatherForecast();
+        const fetchData = async() => {
+            const [currentWeather, weatherForecast] = await Promise.all([
+                fetchCurrentWeather(),
+                fetchWeatherForecast(),
+            ])
+
+            setWeatherElement({
+                ...currentWeather,
+                ...weatherForecast,
+            })
+        }
+        
+        fetchData();
     }, []);
 
     const fetchCurrentWeather = () => {
-        fetch(
+        return fetch(
         'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北'
         )
         .then((response) => response.json())
@@ -141,19 +152,18 @@ const WeatherApp = () => {
                 {}
             );
 
-            setWeatherElement((prevState) => ({
-                ...prevState,
+            return {
                 observationTime: locationData.time.obsTime,
                 locationName: locationData.locationName,
                 temperature: weatherElements.TEMP,
                 windSpeed: weatherElements.WDSD,
                 humid: weatherElements.HUMD,
-            }));
+            };
         });
     };
 
     const fetchWeatherForecast = () => {
-        fetch(
+        return fetch(
         'https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-501AA68A-D87D-41B4-8B8D-F10FAC43F85C&locationName=臺北市'
         )
         .then((response) => response.json())
@@ -170,13 +180,12 @@ const WeatherApp = () => {
                 {}
             );
 
-            setWeatherElement((prevState) => ({
-                ...prevState,
+            return {
                 description: weatherElements.Wx.parameterName,
                 weatherCode: weatherElements.Wx.parameterValue,
                 rainPossibility: weatherElements.PoP.parameterName,
                 comfortability: weatherElements.CI.parameterName,
-            }));
+            };
         });
     }
 
